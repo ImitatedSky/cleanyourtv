@@ -53,12 +53,10 @@ AdGuard Private DNS works on this TV.
 
 ## Firmware note: HOME.JM
 This projector's firmware routes the Home key through a custom `android.intent.category.HOME.JM`
-category, from the JM launcher that was preloaded. The launcher in this repository does not declare it:
-`MainActivity` answers `android.intent.category.HOME`, `DEFAULT` and `LEANBACK_LAUNCHER`, and
-`grep -rn HOME.JM launcher/` finds nothing - so from a clean checkout the Home key does not reach the
-launcher and lands on FallbackHome. The unit in this folder ran with a filter of its own added to the
-manifest, which is not in this repository; making such a filter part of the launcher is a change to the
-Home path and is open as #1799, and when it lands this note goes away.
+category, from the JM launcher that was preloaded (`com.jm.jmlauncher`). The launcher's `MainActivity`
+now declares HOME.JM next to HOME, so once `com.jm.jmlauncher` is disabled (it is in this list) the Home
+key reaches the launcher. The unit in this folder ran with a filter of its own added to the manifest
+before the launcher had one.
 
 ## Security
 This TV has `ro.adb.secure` unset, meaning port 5555 accepts any device on the network without

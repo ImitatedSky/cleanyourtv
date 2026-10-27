@@ -10,7 +10,7 @@
 - **Network**: Wi-Fi; nothing on the USB ports
 
 ## What was done
-1. **Debloated 13 packages**: the TCL MovieArk ad launcher, vendor store, memory cleaner, SwapDesk, two
+1. **Debloated 11 packages** (and the TCL MovieArk ad launcher, switched off with the home screen switch): vendor store, memory cleaner, SwapDesk, two
    preloaded live-TV apps, the built-in media apps, the factory app and a system-uid shell service (`debloat.txt`).
 2. **Installed the launcher** with the theme in `theme/` (dock: Netflix, YouTube, Disney+, Prime Video).
 3. **AdGuard Private DNS**; YouTube and Netflix still load.
@@ -20,7 +20,9 @@
 ## Home key: HOME.JM and `persist.sys.home.selectpkg`
 The remote's Home key starts `com.jm.jmlauncher/.Launcher` (category `android.intent.category.HOME.JM`), which
 forwards to the package named in `persist.sys.home.selectpkg` (factory value `com.tcl.movieark.launcher`).
-`cmd package set-home-activity` prints `Success` and changes nothing the remote does. ADB runs as root here, so:
+`cmd package set-home-activity` prints `Success` and changes nothing the remote does. The launcher declares
+HOME.JM too, so the clean way is to set it as Home and then disable `com.jm.jmlauncher` (the phone app does
+this inside its home screen switch). Without touching the relay, ADB runs as root here, so this also works:
 
 ```sh
 TV_HOST=<ip> tools/tv.py 'setprop persist.sys.home.selectpkg com.gathin.tvhome'

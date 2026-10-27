@@ -10,8 +10,8 @@
 # - com.htc.htclauncherhighenglishd08: stock launcher, disabled during setup. build-and-install.sh does
 #   not know it (it is not one of the stock launchers that script recognises), so run it with
 #   STOCK_LAUNCHER=none and set Home with cmd package set-home-activity. This firmware's Home key also
-#   carries a custom HOME.JM category, which the launcher in this repository does not declare: see the
-#   folder README and #1799.
+#   carries a custom HOME.JM category, which the launcher declares too: with com.jm.jmlauncher
+#   disabled (below), the Home key lands on the launcher. See the folder README.
 # - com.softwinner.tcorrection: projection/keystone settings
 # - com.droidlogic.updater: firmware updater (kept enabled; firmware updaters are better left on)
 # - com.droidlogic.tvinput: HDMI/input hardware layer (TV_INPUT_HARDWARE permission)
