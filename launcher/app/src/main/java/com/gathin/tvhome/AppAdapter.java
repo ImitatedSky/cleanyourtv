@@ -216,6 +216,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final Map<String, String> appLabels, appBanners;
     /** Every app tile is its icon on a card tinted from that icon, never its banner (config.xml, uniform_tiles). */
     private final boolean uniformTiles;
+    /** block_hud: a uniform dock tile is its icon alone, larger, in the hotbar slot DockDecoration draws. */
+    private final boolean blockHud;
     private final List<Entry> items = new ArrayList<>();
 
     AppAdapter(Context ctx, TileListener listener, int dockSize, Config cfg) {
@@ -243,6 +245,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.appLabels = cfg.appLabels;
         this.appBanners = cfg.appBanners;
         this.uniformTiles = cfg.uniformTiles;
+        this.blockHud = cfg.blockHud;
         // Tiles keep their identity across reload(), so a focused tile stays on its app instead of
         // its view being rebound to whatever app now sits in that slot.
         setHasStableIds(true);
@@ -477,6 +480,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (e.backdrop == null) e.backdrop = backdrop(e.icon, ambientColorAt(position));
             h.card.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, e.backdrop));
         }
+        boolean hotbarIcon = blockHud && uniformTiles && dockKind && e.banner == null;
+        if (hotbarIcon) h.card.setBackground(null);
+        // 90% of the card's height instead of ICON_SHARE; the card clips anything larger.
+        h.icon.setScaleX(hotbarIcon ? HOTBAR_ICON_SCALE : 1f);
+        h.icon.setScaleY(hotbarIcon ? HOTBAR_ICON_SCALE : 1f);
         if (e.banner != null) {
             h.banner.setImageDrawable(e.banner);
             h.banner.setVisibility(View.VISIBLE);
@@ -667,6 +675,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     /** Share of the tile height the icon takes in uniform_tiles mode (onCreateViewHolder). */
     private static final float ICON_SHARE = 0.62f;
+    /** block_hud: a dock icon at 90% of the tile's height instead. */
+    private static final float HOTBAR_ICON_SCALE = 0.9f / ICON_SHARE;
 
     /**
      * The colour covering most of an icon, for a card that should read as that app: a small saturated badge

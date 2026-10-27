@@ -34,6 +34,8 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
     private final boolean singleRow;
     /** dock_band_all: in a single row, the band runs behind every app instead of the dock apps only. */
     private final boolean bandAll;
+    /** block_hud: hotbar slots and the HUD rows instead of the band; null draws the band. */
+    private final BlockHud hud;
 
     /**
      * @param translucent the cinematic shelf's band: the artwork and the glow show through it.
@@ -44,9 +46,11 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
      * @param bandVisible false skips the band and its edge, so the tiles float on the wallpaper (dock_band).
      * @param singleRow   every app sits in the dock's row (single_row); the band covers the dock apps only, unless bandAll.
      * @param bandAll     with singleRow, the band runs behind every app in the row (dock_band_all).
+     * @param hud         block_hud: each dock tile in a hotbar slot with the HUD above them, instead of the band.
      */
     DockDecoration(int dockSize, float density, boolean translucent, boolean names, int opacity, boolean lightGlass,
-                   boolean evenPadding, boolean bandVisible, boolean singleRow, boolean bandAll) {
+                   boolean evenPadding, boolean bandVisible, boolean singleRow, boolean bandAll, BlockHud hud) {
+        this.hud = hud;
         this.dockSize = dockSize;
         this.singleRow = singleRow;
         this.bandAll = singleRow && bandAll;
@@ -87,6 +91,10 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
 
     @Override
     public void onDraw(@NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+        if (hud != null) {
+            drawHotbar(c, parent);
+            return;
+        }
         if (!bandVisible) return;
         boolean any = false;
         int cardWidth = 0;
@@ -148,5 +156,39 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         }
         c.drawRoundRect(rect, radius, radius, band);
         c.drawRoundRect(rect, radius, radius, edge);
+    }
+
+    /**
+     * block_hud: a row of hotbar slots across the grid, one per column, as tall as wide (at most twice the tile's
+     * height) and centred on the dock tiles, the focused one framed, and the HUD rows over them. A single row gives
+     * each of its tiles a slot that scrolls with it. The pixel size follows the grid's width.
+     */
+    private void drawHotbar(Canvas c, RecyclerView parent) {
+        int left = parent.getPaddingLeft();
+        int inner = parent.getWidth() - left - parent.getPaddingRight();
+        int p = BlockHud.pixel(inner);
+        int top = 0, side = 0;
+        View selected = null;
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            View child = parent.getChildAt(i);
+            int pos = parent.getChildAdapterPosition(child);
+            if (pos < 0 || (!singleRow && pos >= dockSize)) continue;
+            View card = child.findViewById(R.id.card);
+            if (card == null) continue;
+            side = Math.min(child.getWidth(), 2 * card.getHeight());
+            top = Math.round(child.getTop() + child.getTranslationY()) + card.getTop() + (card.getHeight() - side) / 2;
+            if (singleRow) hud.drawSlot(c, child.getLeft(), top, child.getRight(), top + side, p);
+            if (card.isFocused()) selected = child;
+        }
+        if (side == 0) return;   // the dock is scrolled out of view
+        if (!singleRow) {
+            // Every column, also when there are fewer dock apps than columns.
+            for (int i = 0; i < dockSize; i++) {
+                hud.drawSlot(c, left + inner * i / dockSize, top, left + inner * (i + 1) / dockSize, top + side, p);
+            }
+        }
+        // Over the slots on either side, so drawn after all of them.
+        if (selected != null) hud.drawSelection(c, selected.getLeft(), top, selected.getRight(), top + side, p);
+        hud.drawRows(c, left, left + inner, top, p);
     }
 }

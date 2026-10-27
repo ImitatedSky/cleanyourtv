@@ -1,0 +1,11 @@
+{
+  "block_hud": true,
+  "uniform_tiles": true,
+  "columns": 8,
+  "rows_below_dock": 0,
+  "ambient_glow": false,
+  "focus_overshoot": false,
+  "icon_only_buttons": true,
+  "background_color": "#101418",
+  "wallpaper_dim": 20
+}

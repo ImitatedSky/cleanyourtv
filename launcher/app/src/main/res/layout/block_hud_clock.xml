@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- block_hud: the pixel clock at the top centre, in place of the greeting, clock and date. Added by MainActivity,
+     which sets the text sizes on the pixel font's grid and the clock icon beside the time. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/hudClock"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="top|center_horizontal"
+    android:layout_marginTop="26dp"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:focusable="false"
+    android:visibility="invisible">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:baselineAligned="true">
+
+        <TextClock
+            android:id="@+id/hudTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format12Hour="h:mm"
+            android:format24Hour="HH:mm"
+            android:textColor="#FFFFFFFF"
+            android:includeFontPadding="false"
+            android:singleLine="true" />
+
+        <TextClock
+            android:id="@+id/hudAmPm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:format12Hour="a"
+            android:format24Hour=""
+            android:textColor="#FFE6E6E6"
+            android:includeFontPadding="false"
+            android:singleLine="true" />
+    </LinearLayout>
+
+    <TextClock
+        android:id="@+id/hudDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:format12Hour="@string/date_format_home"
+        android:format24Hour="@string/date_format_home"
+        android:textColor="#FFE6E6E6"
+        android:includeFontPadding="false"
+        android:singleLine="true" />
+</LinearLayout>

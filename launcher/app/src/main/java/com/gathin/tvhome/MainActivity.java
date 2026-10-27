@@ -25,6 +25,7 @@ import android.graphics.Paint;
 import android.graphics.RadialGradient;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -195,6 +196,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView raceKicker, raceHeadline, raceSessions;
     /** config.xml show_stats, overridable by a theme. Off: the line is gone and nothing is read. */
     private boolean showStats;
+    /** block_hud: the hotbar HUD DockDecoration draws and the stats reader fills in; null while off. */
+    private BlockHud blockHud;
+    /** block_hud: the pixel clock at the top centre, shown in place of clockBlock; null while off. */
+    private View hudClock;
     private boolean shamsi;
     /** greeting_name: said after the greeting, which is shown in capitals. */
     private String greetingName = "";
@@ -495,6 +500,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         raceHeadline = findViewById(R.id.raceHeadline);
         raceSessions = findViewById(R.id.raceSessions);
         showStats = cfg.showStats;
+        if (cfg.blockHud) setUpBlockHud();
         shamsi = cfg.shamsiDate;
         lunarDate = findViewById(R.id.lunarDate);
         lunar = cfg.lunarDate;
@@ -589,7 +595,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         });
         if (dockRow) grid.addItemDecoration(new DockDecoration(COLUMNS, density, cinematic, cfg.alwaysShowNames, cfg.dockOpacity, cfg.dockGlass, cfg.dockEvenPadding, cfg.dockBand,
-                singleRow, cfg.dockBandAll));
+                singleRow, cfg.dockBandAll, blockHud));
         if (cfg.fadeRows) TopFade.attach(grid, 48 * density);
         // Reduced motion: the tiles are simply there, with no entrance (reloadApps skips it there too).
         if (animations && !reducedMotion) {
@@ -814,6 +820,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> {
             boolean onTile = newF != null && newF.getId() == R.id.card;
             if (!onTile) hideGlass();
+            if (blockHud != null) grid.invalidate();   // the hotbar's selection frame follows focus
         });
 
         packageFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
@@ -982,7 +989,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             updateInputsButton();
             pillsShown = true;
         }
-        if (showStats) startStats();
+        if (showStats || blockHud != null) startStats();
         sky.update();
         wallpaperPlayer.start();
         handler.postDelayed(minuteTick, MINUTE_MS);
@@ -1663,7 +1670,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             glassAccent = accent;
             glass.setAccent(accent);
         }
-        if (!glassShown) {
+        if (blockHud != null && hotbarSlot(position)) {
+            // The hotbar's selection frame (DockDecoration) marks a dock tile instead of the glass.
+            hideGlass();
+        } else if (!glassShown) {
             springX.cancel();
             springY.cancel();
             glass.setTranslationX(x);
@@ -1711,6 +1721,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(pos);
         View card = vh == null ? null : vh.itemView.findViewById(R.id.card);
         if (card == null || card.getWidth() <= 0 || !card.isFocused()) return;
+        if (blockHud != null && hotbarSlot(pos)) return;   // no glass there to fit
         float pad = 6f * density;
         float scale = adapter.focusScale();
         int w = (int) (card.getWidth() * scale + 2 * pad);
@@ -2044,16 +2055,57 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         else glass.setAlpha(0f);
     }
 
+    // ---- block_hud ---------------------------------------------------------------------------------
+
+    /**
+     * block_hud: the HUD the dock's decoration draws, and the pixel clock at the top centre in place of the greeting,
+     * clock and date (see updateClockVisibility). The pixel font is drawn at whole screen pixels per font pixel (12
+     * to the line), so it stays sharp; text it has no glyphs for, such as a Chinese date, falls back to the system font.
+     */
+    private void setUpBlockHud() {
+        Typeface font = getResources().getFont(R.font.galmuri11);
+        blockHud = new BlockHud(font);
+        hudClock = getLayoutInflater().inflate(R.layout.block_hud_clock, root, false);
+        root.addView(hudClock);
+        int big = fontPixel(36), small = fontPixel(13);
+        TextView time = hudClock.findViewById(R.id.hudTime);
+        pixelText(time, font, big);
+        pixelText(hudClock.findViewById(R.id.hudAmPm), font, small);
+        pixelText(hudClock.findViewById(R.id.hudDate), font, small);
+        time.setCompoundDrawablesWithIntrinsicBounds(new BlockHud.Icon(BlockHud.CLOCK, big), null, null, null);
+        time.setCompoundDrawablePadding(3 * big);
+    }
+
+    /** Pixel-font text at px screen pixels per font pixel, with a hard shadow one font pixel down and right. */
+    private static void pixelText(TextView view, Typeface font, int px) {
+        view.setTypeface(font);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_PX, 12 * px);
+        // A radius of 0 would draw no shadow at all.
+        view.setShadowLayer(0.01f, px, px, HUD_SHADOW);
+    }
+
+    private static final int HUD_SHADOW = 0xFF262626;
+
+    /** Screen pixels per font pixel for pixel-font text of about this size in dp. */
+    private int fontPixel(float dp) {
+        return Math.max(1, Math.round(dp * density / 12f));
+    }
+
+    /** block_hud: the tile sits in a hotbar slot, which marks focus with its own frame instead of the glass. */
+    private boolean hotbarSlot(int position) {
+        return singleRow || position < COLUMNS;
+    }
+
     // ---- optional system stats (config.xml show_stats) --------------------------------------------
 
-    /** Background reader. Started only while Home is resumed and show_stats is on. */
+    /** Background reader. Started only while Home is resumed and show_stats or block_hud is on. */
     private HandlerThread statsThread;
     /** The current run's handler; a run whose handler is no longer this one stops (volatile: read off-thread). */
     private volatile Handler statsBg;
 
     private void startStats() {
         if (statsThread != null) return;
-        stats.setVisibility(View.VISIBLE);
+        if (showStats) stats.setVisibility(View.VISIBLE);
         cpuTotalPrev = -1;
         idlePrev = -1;
         procStatDead = false;
@@ -2067,9 +2119,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             @Override
             public void run() {
                 if (statsBg != bg) return;
-                String line = readStatsLine();
+                String line = showStats ? readStatsLine() : null;
+                int[] hud = blockHud != null ? BlockHud.read(MainActivity.this) : null;
                 handler.post(() -> {
-                    if (showStats && stats != null && statsBg == bg) stats.setText(line);
+                    if (line != null && stats != null && statsBg == bg) stats.setText(line);
+                    // Drawn by the dock's decoration: only a changed value redraws the grid.
+                    if (hud != null && statsBg == bg && blockHud.set(hud)) grid.invalidate();
                 });
                 if (statsBg == bg) bg.postDelayed(this, STATS_MS);
             }
@@ -2466,7 +2521,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void updateClockVisibility() {
         boolean valid = System.currentTimeMillis() >= TIME_VALID_AFTER_MS;
-        clockBlock.setVisibility(valid ? View.VISIBLE : View.INVISIBLE);
+        // block_hud keeps the header's room, so the top buttons and the grid stay where they were.
+        clockBlock.setVisibility(valid && hudClock == null ? View.VISIBLE : View.INVISIBLE);
+        if (hudClock != null) hudClock.setVisibility(valid ? View.VISIBLE : View.INVISIBLE);
         handler.removeCallbacks(clockCheck);
         if (valid) {
             updateGreeting();
