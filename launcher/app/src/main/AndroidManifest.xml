@@ -91,6 +91,9 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <!-- JM/Askey projector firmware (JY210-C, HY320) sends the remote's Home key with this category,
+                     normally answered by com.jm.jmlauncher; with that disabled, Home lands here (#1799). -->
+                <category android:name="android.intent.category.HOME.JM" />
             </intent-filter>
             <!-- Listed in the TV's own app list, so it can be opened from the stock home screen too. -->
             <intent-filter>
