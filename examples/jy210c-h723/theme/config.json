@@ -1,0 +1,27 @@
+{
+  "wallpaper": true,
+  "wallpaper_dim": 20,
+  "ambient_glow": false,
+  "app_glow": true,
+  "dock_opacity": 70,
+  "dock_glass": true,
+  "glass_style": "rim",
+  "app_library": true,
+  "library_apps": [
+    "com.netflix.mediaclient",
+    "com.bozee.usbdisplay",
+    "com.android.chrome"
+  ],
+  "dock_apps": [
+    "com.netflix.mediaclient",
+    "com.google.android.youtube.tv",
+    "com.disney.disneyplus",
+    "com.amazon.amazonvideo.livingroom"
+  ],
+  "hidden_apps": [
+    "com.tv9c.launcher"
+  ],
+  "app_labels": [
+    "com.tv9c.setting=投影機設定"
+  ]
+}

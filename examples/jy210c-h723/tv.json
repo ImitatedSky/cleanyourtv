@@ -1,0 +1,6 @@
+{
+  "tv": "JY210-C projector (Allwinner H723 / sun50iw15p1, board H200, Askey/JM firmware), 720p",
+  "os": "Android 14",
+  "brand": "JY210-C",
+  "notes": "Home key goes through the JM relay (`com.jm.jmlauncher`, HOME.JM) to `persist.sys.home.selectpkg`, so `set-home-activity` alone changes nothing; TCL MovieArk ad launcher, vendor store, cleaner, SwapDesk, factory app and a system-uid shell service off; QuickShare (`com.bozee.usbdisplay`) kept; working Netflix is `com.netflix.mediaclient` (`com.netflix.ninja` 4.0 is a stub); Play Store 53.4.17 never loads on this 32-bit build and was rolled back to the factory 34.1.09; ADB is root with `ro.adb.secure=0`: [notes](jy210c-h723/README.md)"
+}
