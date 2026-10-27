@@ -1,42 +1,44 @@
 # JY210-C projector (Allwinner H723 / sun50iw15p1, board H200, Askey/JM firmware), Android 14 (SDK 34)
 # Firmware UP1A.231105.001.A1 Projector.20260725.201331 userdebug, 1280x720, 213dpi, 32-bit only.
+# ro.product.brand/model/device all read "Google"; manufacturer askey.
 #
 # Apply:   TV_HOST=<ip> tools/disable.sh examples/jy210c-h723/debloat.txt
 # Undo:    TV_HOST=<ip> tools/restore.sh examples/jy210c-h723/debloat.txt com.tcl.movieark.launcher
 # Everything is DISABLED, not uninstalled.
 #
+# Home: the remote's Home key starts com.jm.jmlauncher/.Launcher (category HOME.JM), which forwards to
+# the package in persist.sys.home.selectpkg (factory: com.tcl.movieark.launcher, the stock ad launcher).
+# set-home-activity alone changes nothing the remote does. Two ways to the new launcher:
+# - with this fork's launcher, which also answers HOME.JM: set it as Home, then disable com.jm.jmlauncher
+#   (the phone app does this inside its home screen switch and turns it back on if the switch fails);
+# - with any launcher (adbd is root here): setprop persist.sys.home.selectpkg com.gathin.tvhome.
+# Not in this list: com.tcl.movieark.launcher and com.jm.jmlauncher (home screen switch only).
+#
 # Kept on purpose:
-# - com.bozee.usbdisplay (QuickShare): screen mirroring + phone remote / volume control. User relies on it.
+# - com.bozee.usbdisplay (QuickShare): screen mirroring, and the phone remote including volume
 # - com.softwinner.miracastReceiver: screen mirroring
-# - com.android.chrome, com.tcl.browser (BrowseHere): browsers, user uses them
-# - com.netflix.mediaclient (the Netflix that works here; com.netflix.ninja 4.0 is a stub that closes at once),
-#   com.google.android.youtube.tv, com.disney.disneyplus,
-#   com.amazon.amazonvideo.livingroom: streaming the user uses
+# - com.netflix.mediaclient: the Netflix that works here (com.netflix.ninja 4.0 is a stub that closes at once)
 # - com.tv9c.setting: projector settings (Wi-Fi, picture); com.softwinner.tcorrection: keystone
 # - com.softwinner.update: firmware updater
 # - com.softwinner.awsource / awlivetv / vis / tvvolume / awmanager: inputs, HDMI, volume OSD
-# - com.tv9c.launcher, com.jm.jmlauncher (HOME.JM): fallback Home, left enabled
+# - com.tv9c.launcher: second stock home, the fallback
 # - com.softwinner.tv.factorymenu: factory menu, never started, left alone
 # - com.android.vending: rolled back to the factory 34.1.09 build. 53.4.17 (pushed 2026-10-26) falls back
 #   to Java Cronet on this 32-bit firmware and never loads ("bidirectional stream API is not supported").
 
-# Vendor junk
-com.eusfu.appstore
-com.htc.clearmemory
-com.tv9c.upgrade
+# Manufacturer store, cleaner and launcher switcher
+com.eusfu.appstore                          # third-party app store
+com.htc.clearmemory                         # "Clean" memory cleaner
+com.tv9c.upgrade                            # "SwapDesk", switches between the stock launchers
 
-# Apps the user does not use
-cn.fuwentuteng.androidtv
-com.aesq.zb
-com.softwinner.TvdVideo
-com.droidlogic.musicplayer
-com.softwinner.TvdFileManager
-com.softwinner.imageParser
+# Preloaded apps
+cn.fuwentuteng.androidtv                    # live TV app
+com.aesq.zb                                 # live TV app
+com.softwinner.TvdVideo                     # video player
+com.droidlogic.musicplayer                  # music player
+com.softwinner.TvdFileManager               # file manager
+com.softwinner.imageParser                  # picture viewer
 
-# Factory / background
-com.fb
-com.define.shellservice
-
-# Stock ad launcher (TCL MovieArk / "HIOS"). Home goes to com.gathin.tvhome via persist.sys.home.selectpkg,
-# which the JM relay (com.jm.jmlauncher, HOME.JM) reads; restore sets it back to com.tcl.movieark.launcher.
-com.tcl.movieark.launcher
+# Factory test and background shell
+com.fb                                      # JM factory test app; disabled, never started
+com.define.shellservice                     # shell service running as system uid
